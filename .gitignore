@@ -1,0 +1,31 @@
+# Private layer: real client names, source documents, timeline, hours.
+# Never committed. See ANONYMIZATION.md.
+.private/
+**/.private/
+
+# Source material and archives never belong in this repo.
+*.pdf
+*.zip
+*.tar
+*.tar.gz
+*.csv
+*.sqlite
+*.db
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Jekyll
+_site/
+.jekyll-cache/
+.jekyll-metadata
+Gemfile.lock
