@@ -5,7 +5,7 @@ remote_theme: just-the-docs/just-the-docs
 
 # Nav
 aux_links:
-  GitHub: https://github.com/Ckitaunmonton/engineering-casebook
+  GitHub: https://github.com/martin-segalerba/engineering-casebook
 
 color_scheme: light
 search_enabled: true
