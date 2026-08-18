@@ -1,0 +1,24 @@
+title: Systems Casebook
+description: >-
+  Case studies in CRM data architecture, identity resolution and system integration.
+remote_theme: just-the-docs/just-the-docs
+
+# Nav
+aux_links:
+  GitHub: https://github.com/Ckitaunmonton/systems-casebook
+
+color_scheme: light
+search_enabled: true
+heading_anchors: true
+
+mermaid:
+  version: "10.9.1"
+
+exclude:
+  - .private/
+  - README-dev.md
+  - Gemfile
+  - Gemfile.lock
+
+plugins:
+  - jekyll-remote-theme
