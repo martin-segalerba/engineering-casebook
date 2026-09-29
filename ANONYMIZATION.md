@@ -28,9 +28,10 @@ can calibrate how much to trust the parts that remain.
 
 ## What is kept
 
-- **Vendor and platform names.** HubSpot, Salesforce, Open Dental, L2, Aristotle, New/Mode. These
-  describe the stack, not the client. Each has a large customer base, and naming them is what makes
-  the technical decisions legible to anyone who has worked with them.
+- **Vendor and platform names.** HubSpot, Salesforce, Open Dental, L2, Aristotle, New/Mode, CallRail,
+  RingCentral, Make.com. These describe the stack, not the client. Each has a large customer base, and
+  naming them is what makes the technical decisions legible to anyone who has worked with them. A
+  vendor name says which tool was used; it says nothing about who used it.
 - **Generic API and schema identifiers** that carry the engineering point: `hs_merged_object_ids`,
   `sourceType`, `TreatPlanNum`, `PatNum`. These are vendor surface area, documented publicly by the
   vendors themselves.
@@ -57,6 +58,14 @@ policy and not an accident of what happened to be at hand.
 | **Relief** | US affiliate of an international humanitarian and anti-poverty nonprofit |
 | **Surgical** | Multi-location oral and maxillofacial surgery group |
 | **Signal** | B2B identity-resolution SaaS company |
+| **Counsel** | Litigation law firm |
+| **Oberon** | B2B SaaS company repositioning its brand |
 
-Three case studies share the Civic engagement. They are written to be read independently, but the
-codename lets them cross-reference where the work genuinely built on itself.
+Several case studies share a client. They are written to be read independently, but the codename
+lets them cross-reference where the work genuinely built on itself.
+
+One case study, [the static analyzer](case-studies/09-automation-static-analysis.md), describes a tool
+I built rather than a client engagement, so it carries no codename. The clients who authorized
+installing it on their portals stay anonymous there as everywhere else, and no output it produced
+against a real portal is published: those reports name workflows and carry account identifiers. The
+interface shown in that case study is a reconstruction using synthetic workflow names.

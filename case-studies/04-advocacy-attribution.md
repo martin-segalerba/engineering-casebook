@@ -1,101 +1,88 @@
 ---
-title: "04 · Advocacy attribution across an external action platform"
+title: "04 · Replacing a vendor integration with a webhook you control"
 parent: Case studies
 nav_order: 4
 ---
 
-# Advocacy attribution across an external action platform
+# Replacing a vendor integration with a webhook you control
 
 **Client:** Civic (US state-level civic advocacy nonprofit)
-**Role:** Solutions Engineer: integration design, workflow consolidation, team documentation
-**Stack:** HubSpot forms and workflows, New/Mode advocacy platform, paid acquisition vendors
+**Role:** Solutions Engineer: integration design, rebuild, team documentation
+**Stack:** HubSpot forms, workflows and webhooks, a third-party advocacy action platform
 
-Short-form case study. The build is small and the interesting part is the consolidation it enabled and
-the failure mode that nearly shipped with it.
+Short-form case study. The build is small. The reason it is here is what happened to it five months
+after it shipped.
 
 ## Context
 
-Civic runs advocacy campaigns through an external action platform where supporters contact their
-legislators. Supporters arrive from organic traffic and from paid list-buy vendors, and every action
-taken on the platform needs to land in HubSpot attributed to the right campaign, the right advocacy
-topic and the right acquisition source.
+Civic runs advocacy campaigns through a third-party action platform where supporters contact their
+legislators. Every action taken on that platform has to arrive in HubSpot attributed to the campaign
+that produced it, because campaign performance is how the organization decides where to spend.
 
 ## Problem
 
-Two things were coupled that should not have been.
-
-The action platform and HubSpot had no shared campaign identifier, so submissions arrived without a
-reliable way to say which campaign produced them.
-
-Separately, the automation pattern had one workflow per form. Launching a new paid vendor meant
-building new automation, which put a marketing task behind an engineering queue and grew the workflow
-count with every campaign. That is the same accumulation pattern documented at a much later stage in
-[case study 05](05-portal-rebuild.md).
+The two systems had no shared campaign identifier. Submissions arrived, but nothing on the record said
+which campaign they came from, so attribution was reconstructed afterwards from timestamps and page
+URLs. That reconstruction is guesswork, and it gets worse as more campaigns run at once.
 
 ## What I designed
 
-**A hidden campaign identifier on the form.** Each HubSpot form carries a hidden field whose default
-value is the action platform's unique campaign ID. The submission arrives already carrying the join
-key, so attribution is a property on the record rather than something reconstructed later from
-timestamps and page URLs.
+**A hidden campaign identifier carried on the form.** Each HubSpot form carries a hidden field whose
+default value is the action platform's own campaign ID. The submission therefore arrives already
+holding the join key. Attribution stops being an inference and becomes a property on the record, set
+at the moment of submission.
 
-**One routing workflow replacing one workflow per form.** A single lead-generation routing and source
-attribution workflow reads the transit fields from the submission and branches on vendor. Adding a paid
-vendor became: add the value to the vendor property, add the same value to the source properties, add
-it to the paid branch condition. Launching a vendor went from building automation to adding a dropdown
-value, which is the entire reason the consolidation was worth doing.
+The operational consequence is what made it worth doing: launching a campaign became cloning a form
+and pasting one ID into one field. That is something the marketing team does without an engineer.
 
-**Fiscal-year fields isolated by design.** Paid-lead tracking flags carry a fiscal year. Those pieces
-were kept separate from the routing logic so the annual rollover is a checklist that adds new
-properties and repoints a handful of actions, rather than a rebuild. Prior-year properties are left
-untouched as the historical reporting record.
+**A webhook workflow instead of the vendor's own integration.** Rather than rely on the platform's
+packaged integration, I found its campaign submit API and drove it from a HubSpot workflow with a
+webhook action. That put the contract between the two systems in a place I could read, version and
+change, instead of inside a connector whose behavior I could only observe.
 
-## The failure mode worth writing down
+**A documented procedure rather than tribal knowledge.** The whole thing ships as an eight-step SOP
+with a test submission and a rollback, because the people who run it are campaigners.
 
-The platform copies values between properties by **internal name**, not by label. If the same option is
-`VendorName` in one property and `Vendorname` in another, the copy silently produces nothing. It does
-not error, does not warn, and does not appear in any log.
+## The part worth writing down
 
-This is what held up the original go-live. The visible symptom is that some fields on a submission are
-populated and others are empty, which looks like a broken integration and is actually a one-character
-casing difference in an internal value that nobody looks at because the label reads correctly.
+In February 2026, five months after go-live, the platform changed its API without notice. No
+deprecation warning, no changelog entry, no email. Submissions simply stopped arriving.
 
-The procedure now says: when adding a vendor, set the label and the internal value deliberately, write
-the internal value down, and use the identical string across all three properties. The verification
-step is to submit a test and read the contact's property history, checking that all three transit
-fields were written within a minute of each other. If one gained a value and another did not, the
-internal names do not match.
+Because the integration was a webhook call I owned rather than a connector I rented, the fix was
+mine to make. I rebuilt the call as a custom code action and had it running again the next day.
+
+The generalizable point is not "build it yourself." It is that when you depend on an external
+system, you should know which failures you are able to fix and which ones leave you filing a support
+ticket and waiting. A packaged connector would have failed exactly as fast, and the recovery would
+have been someone else's queue. Choosing the more manual integration bought a recovery time I
+controlled, and that only paid off once, which is the usual way this kind of decision pays off.
 
 ## Trade-offs
 
-**Hidden field on a cloned form, rather than an API integration.** Cloning a form and setting one
-hidden default is something the marketing team does without an engineer. An API integration would be
-more robust against someone editing the form, and it would put every new campaign back in the
-engineering queue. For a team launching campaigns weekly, the cloneable form won.
+**A hidden field on a cloneable form, rather than a deeper API integration.** The field can be broken
+by anyone editing the form, and a deeper integration would be sturdier. It would also put every new
+campaign back in an engineering queue. For a team launching campaigns weekly, the cloneable form won,
+and the SOP's verification step exists to catch the breakage that choice allows.
 
-**One branching workflow rather than one per vendor.** The single workflow is larger and its branch
-tree needs reading. It is also the only place in the portal that defines what "paid" means, which is
-worth more than the readability of any individual branch.
+**Owning the API call rather than using the vendor's integration.** More to build and more to
+maintain, and I carry the burden when the vendor changes something. That burden turned out to be the
+asset.
 
 ## Outcome
 
-Every advocacy submission arrives attributed to a campaign, a topic and an acquisition source, with the
-join key present on the record at submission time. Vendor launches stopped requiring new automation.
-The whole thing is documented as an eight-step procedure with a test and a rollback, because the people
-running it are marketers rather than engineers.
-
-The rollback is worth noting: to remove a vendor, take the value out of the paid branch condition
-first, so its submissions route as non-paid, which is the safe default, and only then remove the
-property options. Never delete an option that live contacts still hold, because the stored value stays
-on the record while filters stop matching it.
+Every advocacy submission arrives attributed to a campaign, with the join key present on the record at
+submission time rather than reconstructed later. Campaign launches stopped requiring engineering. When
+the vendor broke the contract without telling anyone, the integration was back the next day.
 
 ## What I would do differently
 
-The internal-name matching requirement is enforced by a written procedure and a human remembering to
-follow it, which is a control that works until someone is in a hurry. A scheduled check comparing the
-option sets of the three properties and alerting on divergence would catch it without depending on
-anyone's care, and it would take an afternoon to build.
+Nothing detected the outage. It was noticed because someone looked at submission counts and found them
+at zero. An integration that depends on an external API should ship with a check that alerts when
+expected traffic stops arriving, which is a small amount of work next to the build itself. I made that
+argument properly on a later engagement and built the monitoring there, which is
+[case study 11](11-integration-forensics.md).
 
 ---
 
-**Related patterns:** [Provenance-first debugging](../patterns/provenance-first-debugging.md)
+**Related patterns:** [Build the missing trigger](../patterns/build-the-missing-trigger.md) ·
+[Provenance-first debugging](../patterns/provenance-first-debugging.md)
