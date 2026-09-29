@@ -1,3 +1,8 @@
+---
+title: Home
+nav_order: 1
+---
+
 # Systems Casebook
 
 Case studies in CRM data architecture, identity resolution and system integration, from production
